@@ -39,13 +39,21 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        $user = $request->user();
+        $authData = [
+            'user' => $user,
+        ];
+
+        if ($user) {
+            $authData['roles'] = $user->roles->pluck('name');
+            $authData['permissions'] = $user->getAllPermissions()->pluck('name');
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
-            'auth' => [
-                'user' => $request->user(),
-            ],
+            'auth' => $authData,
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
