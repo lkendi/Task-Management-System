@@ -1,44 +1,47 @@
-# Use official PHP with Apache
+# Use the official PHP image with Apache
 FROM php:8.2-apache
-
-# Set working directory
-WORKDIR /var/www/html
 
 # Install system dependencies
 RUN apt-get update && \
     apt-get install -y \
-        zip unzip git curl libonig-dev libzip-dev libpq-dev libpng-dev nodejs npm && \
-    docker-php-ext-install pdo_mysql mbstring zip
+    libzip-dev zip unzip git curl libonig-dev \
+    libpq-dev libpng-dev nodejs npm && \
+    docker-php-ext-install pdo_mysql zip mbstring
 
 # Enable Apache mod_rewrite
-RUN a2enmod rewrite && \
-    echo "ServerName localhost" >> /etc/apache2/apache2.conf
+RUN a2enmod rewrite
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy Laravel project files
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy project files
 COPY . .
 
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Install Node dependencies and build assets
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
-    npm install && \
-    npm run build
+# Build frontend assets
+RUN npm install && npm run build
 
-# Set correct permissions
-RUN chown -R www-data:www-data storage bootstrap/cache
+# Clear Laravel caches
+RUN php artisan config:clear && \
+    php artisan route:clear && \
+    php artisan view:clear
 
-# Expose port 8080 for Railway
-EXPOSE 8080
+# Give Apache permissions to storage and cache
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Make Apache listen on port 8080
-RUN echo "Listen 8080" >> /etc/apache2/ports.conf && \
+# Fix Apache to point to /public and listen on 8080
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf && \
+    echo "Listen 8080" >> /etc/apache2/ports.conf && \
+    sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf && \
     sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf
 
+# Expose port 8080
+EXPOSE 8080
 
-# Run migrations and start Apache
+# Run migrations & start Apache
 CMD php artisan migrate --force && apache2-foreground
