@@ -25,6 +25,21 @@ class DatabaseSeeder extends Seeder
             'role' => 'admin'
         ]);
 
+        $user = User::factory()->create([
+            'name' => 'Test Admin',
+            'email' => 'admin@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'admin'
+        ]);
+        
+        $user = User::factory()->create([
+            'name' => 'Test User',
+            'email' => 'user@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'user'
+        ]);
+
+
         $project1 = Project::create([
             'name' => 'Website Redesign',
             'description' => 'Complete redesign of the company website with modern UI/UX improvements and responsive design.',
