@@ -32,8 +32,13 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 # Set correct permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Expose port 8080 (for Railway)
+# Expose port 8080 for Railway
 EXPOSE 8080
+
+# Make Apache listen on port 8080
+RUN echo "Listen 8080" >> /etc/apache2/ports.conf && \
+    sed -i 's/80/8080/g' /etc/apache2/sites-available/000-default.conf
+
 
 # Run migrations and start Apache
 CMD php artisan migrate --force && apache2-foreground
