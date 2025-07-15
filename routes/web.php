@@ -27,6 +27,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
             'completed'   => Task::where('status', 'completed')->count(),
             'overdue'     => Task::where('due_date', '<', now())->whereNotIn('status', ['completed'])->count(),
         ];
+        $userStats = [
+            'total'  => User::count(),
+            'active' => User::count(),
+        ];
         $recentTasks = Task::with(['assignedTo', 'createdBy', 'project'])
             ->latest()
             ->take(5)
@@ -52,7 +56,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
             'low'    => Task::where('priority', 'low')->count(),
         ];
         return Inertia::render('admin/Dashboard', [
-            'stats' => ['tasks' => $taskStats, 'priority' => $tasksByPriority],
+            'stats' => ['tasks' => $taskStats, 'users' => $userStats, 'priority' => $tasksByPriority],
             'recentTasks' => $recentTasks,
             'users' => User::select('id', 'name')->get()->toArray(),
         ]);
