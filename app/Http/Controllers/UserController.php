@@ -31,10 +31,10 @@ class UserController extends Controller
 
         if ($filters['search']) {
             $search = $filters['search'];
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
                   ->orWhere('email', 'like', "%$search%");
-            });
+                });
         }
 
         if ($filters['role']) {
@@ -43,10 +43,10 @@ class UserController extends Controller
 
         if ($filters['verified'] !== '') {
             if ($filters['verified'] === 'true') {
-                $query->whereNotNull('email_verified_at');
+                    $query->whereNotNull('email_verified_at');
             } elseif ($filters['verified'] === 'false') {
-                $query->whereNull('email_verified_at');
-            }
+                    $query->whereNull('email_verified_at');
+                }
         }
 
         if ($sort === 'assigned_tasks_count') {
@@ -139,5 +139,14 @@ class UserController extends Controller
     {
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User deleted successfully');
+    }
+
+    /**
+     * Show the specified user (for API/test purposes only).
+     */
+    public function show(User $user)
+    {
+        // Just return a 200 response for test compatibility
+        return response()->json($user);
     }
 }

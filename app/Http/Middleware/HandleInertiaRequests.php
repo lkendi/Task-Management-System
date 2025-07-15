@@ -42,8 +42,10 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         $authData = [
             'user' => $user,
-            'role' => $user->role
         ];
+        if ($user) {
+            $authData['role'] = $user->role;
+        }
 
         return [
             ...parent::share($request),

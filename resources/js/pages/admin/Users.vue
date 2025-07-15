@@ -1,12 +1,12 @@
+/* eslint-disable vue/no-deprecated-filter */
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { PageHeader } from '@/components/ui/page';
 import { FilterBar } from '@/components/ui/filters';
 import { DataTable, DataTableRow } from '@/components/ui/data-table';
 import Badge from '@/components/ui/badge/Badge.vue';
-import Icon from '@/components/Icon.vue';
 import { useFilters } from '@/composables/useFilters';
 import Modal from '@/components/ui/modal/Modal.vue';
 import UserForm from '@/components/ui/users/UserForm.vue';
@@ -19,7 +19,7 @@ interface User {
     email: string;
     email_verified_at: string | null;
     created_at: string;
-    roles: string[];
+    role: string;
     permissions: string[];
     assigned_tasks_count: number;
     created_tasks_count: number;
@@ -55,12 +55,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const { search, filters, clearFilters } = useFilters(props.filters, '/users');
 
+function capitalize(str: string) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 const filterConfigs = [
     {
         key: 'role',
         label: 'Role',
         options: [
-            ...props.roles.map(role => ({ value: role, label: role.charAt(0).toUpperCase() + role.slice(1) })),
+            ...props.roles.map(role => ({ value: role, label: capitalize(role) })),
         ],
     },
     {
@@ -88,7 +92,7 @@ const userActions = [
 ];
 
 const getVerificationColor = (verifiedAt: string | null) => {
-    return verifiedAt 
+    return verifiedAt
         ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
         : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
 };
@@ -112,6 +116,9 @@ const showModal = ref(false);
 const modalType = ref('');
 const modalUser = ref(null);
 
+const page = usePage();
+const currentUserId = page.props.auth.user.id;
+
 function openModal(type: string, user = null) {
     modalType.value = type;
     modalUser.value = user;
@@ -133,105 +140,85 @@ function handleDelete(user: User) {
 </script>
 
 <template>
+
     <Head title="Users" />
-
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-6 p-6">
-            <PageHeader
-                title="Users"
-                description="Manage system users and their permissions"
-                action-label="Create User"
-                action-href=""
-                @action="() => openModal('create')"
-            />
+        <div class="flex h-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6">
+            <PageHeader title="Users" description="Manage system users and their permissions" action-label="Create User"
+                action-href="" @action="() => openModal('create')" />
 
-            <FilterBar
-                :search-value="search"
-                :filters="filters"
-                :filter-configs="filterConfigs"
-                search-placeholder="Search by name or email..."
-                @update:search-value="search = $event"
-                @update:filters="filters = $event"
-                @search="search = $event"
-                @clear="clearFilters"
-            />
+            <FilterBar :search-value="search" :filters="filters" :filter-configs="filterConfigs"
+                search-placeholder="Search by name or email..." @update:search-value="search = $event"
+                @update:filters="filters = $event" @search="search = $event" @clear="clearFilters" />
 
-            <DataTable
-                title="Users"
-                :pagination="users"
-                empty-message="Try adjusting your search or filters"
-                empty-icon="lucide:users"
-                :sort-options="sortOptions"
-                :current-sort="filters.sort"
-                :sort-direction="filters.direction as 'asc' | 'desc'"
-                @pagination="handlePagination"
-                @sort="handleSort"
-            >
-                <template #default>
-                    <div class="space-y-4">
-                        <DataTableRow
-                            v-for="user in users.data"
-                            :key="user.id"
-                            :item="user"
-                            :actions="userActions"
-                            :show-action-icons="true"
-                            :show-badges="true"
-                            base-path="/users"
-                            @action="(action, user) => {
-                                if (action.label === 'Edit' || action.label === 'Edit User') openModal('edit', user);
-                                else if (action.label === 'View' || action.label === 'View User') openModal('view', user);
-                                else if (action.label === 'Delete' || action.label === 'Delete User') handleDelete(user);
-                            }"
-                        >
-                            <template #avatar>
-                                <div class="flex-shrink-0">
-                                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <span class="text-sm font-medium text-primary">
-                                            {{ user.name.charAt(0).toUpperCase() }}
-                                        </span>
+            <div class="overflow-x-auto">
+                <DataTable title="Users" :pagination="users" empty-message="Try adjusting your search or filters"
+                    empty-icon="lucide:users" :sort-options="sortOptions" :current-sort="filters.sort"
+                    :sort-direction="filters.direction as 'asc' | 'desc'" @pagination="handlePagination"
+                    @sort="handleSort">
+                    <template #default>
+                        <div class="space-y-3">
+                            <DataTableRow v-for="user in users.data" :key="user.id" :item="user" :actions="userActions"
+                                :show-action-icons="true" :show-badges="true" base-path="/users" @action="(action, user) => {
+                                    if ((action.label === 'Edit' || action.label === 'Edit User')) openModal('edit', user);
+                                    else if ((action.label === 'View' || action.label === 'View User')) openModal('view', user);
+                                    else if ((action.label === 'Delete' || action.label === 'Delete User') && user.id !== currentUserId) handleDelete(user);
+                                }"
+                                :disable-actions="(action: any, user: User) => (action.label === 'Delete' || action.label === 'Delete User') && user.id === currentUserId">
+                                <template #avatar>
+                                    <div class="flex-shrink-0">
+                                        <div
+                                            class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <span class="text-sm font-medium text-primary">
+                                                {{ user.name.split(' ').map(n => n[0]).join('').toUpperCase() }}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            </template>
+                                </template>
 
-                            <template #content>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <h4 class="font-medium text-sm truncate">{{ user.name }}</h4>
-                                    <Badge :class="getVerificationColor(user.email_verified_at)" class="text-xs">
-                                        {{ user.email_verified_at ? 'Verified' : 'Unverified' }}
-                                    </Badge>
-                                </div>
-                                <p class="text-sm text-muted-foreground truncate">{{ user.email }}</p>
-                                <div class="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                                    <span>
-                                        {{ user.roles && user.roles.length > 0
-                                            ? user.roles.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join(', ')
-                                            : 'No roles' }}
-                                    </span>
-                                    <span>Joined {{ new Date(user.created_at).toLocaleDateString() }}</span>
-                                    <span>{{ user.assigned_tasks_count }} assigned tasks</span>
-                                    <span>{{ user.created_tasks_count }} created tasks</span>
-                                </div>
-                            </template>
-                        </DataTableRow>
-                    </div>
-                </template>
-            </DataTable>
+                                <template #content>
+                                    <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                                        <h4 class="font-medium text-sm truncate">{{ user.name }}</h4>
+                                        <Badge :class="getVerificationColor(user.email_verified_at)"
+                                            class="text-xs py-0.5">
+                                            {{ user.email_verified_at ? 'Verified' : 'Unverified' }}
+                                        </Badge>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground truncate">{{ user.email }}</p>
+                                    <div
+                                        class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-1 text-xs text-muted-foreground">
+                                        <span class="truncate">
+                                            Role: {{ user.role ? capitalize(user.role) : 'No role' }}
+                                        </span>
+                                        <span class="hidden sm:inline">{{ user.assigned_tasks_count }} tasks</span>
+                                    </div>
+                                </template>
+
+                                <template #action="{ action, user }">
+                                    <button
+                                        v-if="(action.label === 'Delete' || action.label === 'Delete User') && user.id === currentUserId"
+                                        class="opacity-50 cursor-not-allowed text-gray-400 flex items-center gap-1 px-2 py-1 rounded"
+                                        title="You cannot delete your own account"
+                                        disabled
+                                    >
+                                        <span v-if="action.icon" :class="['icon', action.icon]"></span>
+                                        {{ action.label }}
+                                    </button>
+                                </template>
+                            </DataTableRow>
+                        </div>
+                    </template>
+                </DataTable>
+            </div>
         </div>
     </AppLayout>
 
     <Modal :show="showModal" @close="closeModal">
         <template v-if="modalType === 'create'">
-            <UserForm
-                :roles="props.roles"
-                @submitted="closeModal"
-            />
+            <UserForm :roles="props.roles" @submitted="closeModal" />
         </template>
         <template v-else-if="modalType === 'edit' && modalUser">
-            <UserForm
-                :user="modalUser"
-                :roles="props.roles"
-                @submitted="closeModal"
-            />
+            <UserForm :user="modalUser" :roles="props.roles" @submitted="closeModal" />
         </template>
         <template v-else-if="modalType === 'view' && modalUser">
             <UserDetails :user="modalUser" />

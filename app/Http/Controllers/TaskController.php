@@ -59,7 +59,30 @@ class TaskController extends Controller
             })
             ->orderBy($sort, $direction)
             ->paginate(10)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(function ($task) {
+                return [
+                    'id' => $task->id,
+                    'title' => $task->title,
+                    'description' => $task->description,
+                    'status' => $task->status,
+                    'priority' => $task->priority,
+                    'due_date' => $task->due_date,
+                    'project' => $task->project
+                        ? ['id' => $task->project->id, 'name' => $task->project->name]
+                        : ($task->project_id ? ['id' => $task->project_id, 'name' => 'Unknown Project'] : null),
+                        'assigned_to' => $task->assignedTo ? [
+                        'id' => $task->assignedTo->id,
+                        'name' => $task->assignedTo->name,
+                    ] : null,
+                    'created_by' => $task->createdBy ? [
+                        'id' => $task->createdBy->id,
+                        'name' => $task->createdBy->name,
+                    ] : null,
+                    'created_at' => $task->created_at->toDateTimeString(),
+                    'is_overdue' => $task->due_date && $task->due_date < now() && $task->status !== 'completed',
+                ];
+            });
 
         $statuses = ['pending', 'in_progress', 'completed'];
         $priorities = ['high', 'medium', 'low'];
@@ -97,20 +120,28 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $data = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'status' => 'required|in:pending,in_progress,completed',
             'priority' => 'required|in:high,medium,low',
             'due_date' => 'nullable|date',
-            'project_id' => 'nullable|exists:projects,id',
             'assigned_to' => 'nullable|exists:users,id',
+            'created_by' => 'nullable|exists:users,id',
+            'project_id' => 'nullable|exists:projects,id',
         ]);
 
-        $validated['created_by'] = auth()->id();
-        
-        Task::create($validated);
-        
+        if (empty($data['project_id'])) {
+            $firstProject = \App\Models\Project::first();
+            if ($firstProject) {
+                $data['project_id'] = $firstProject->id;
+            } else {
+                abort(400, 'No project available to assign to the task.');
+            }
+        }
+
+        $task = Task::create($data);
+
         return redirect()->route('tasks.index')->with('success', 'Task created successfully');
     }
 
@@ -147,23 +178,17 @@ class TaskController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Task $task)
     {
-        $task = Task::findOrFail($id);
-        
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'status' => 'required|in:pending,in_progress,completed',
-            'priority' => 'required|in:high,medium,low',
-            'due_date' => 'nullable|date',
-            'project_id' => 'nullable|exists:projects,id',
+        $data = $request->validate([
             'assigned_to' => 'nullable|exists:users,id',
+            'status' => 'nullable|string|in:pending,in_progress,completed',
+            // add other fields as needed
         ]);
 
-        $task->update($validated);
-        
-        return redirect()->route('tasks.index')->with('success', 'Task updated successfully');
+        $task->update($data);
+
+        return back()->with('success', 'Task updated successfully');
     }
 
     /**

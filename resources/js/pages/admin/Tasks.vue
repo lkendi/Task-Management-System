@@ -1,3 +1,4 @@
+/* eslint-disable vue/no-deprecated-filter */
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -214,9 +215,13 @@ const showModal = ref(false);
 const modalType = ref('');
 const modalTask = ref(null);
 
-function openModal(type: string, task = null) {
+function openModal(type: string, task: any = null) {
     modalType.value = type;
-    modalTask.value = task;
+    modalTask.value = task && typeof task === 'object' ? Object.assign({}, task, {
+        project: task.project ?? undefined,
+        assigned_to: task.assigned_to ?? null,
+        created_by: task.created_by ?? null
+    }) : null;
     showModal.value = true;
 }
 
@@ -232,13 +237,15 @@ function handleDelete(task: Task) {
         });
     }
 }
+
+console.log('Tasks data:', props.tasks.data);
 </script>
 
 <template>
-    <Head title="Tasks" />
 
+    <Head title="Tasks" />
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-6 p-6">
+        <div class="flex h-full flex-1 flex-col gap-4 sm:gap-6 p-4 sm:p-6">
             <PageHeader title="Tasks" description="Manage and track your tasks" action-label="Create Task"
                 action-href="" @action="() => openModal('create')" />
 
@@ -246,80 +253,81 @@ function handleDelete(task: Task) {
                 search-placeholder="Search tasks..." @update:search-value="search = $event"
                 @update:filters="filters = $event" @search="search = $event" @clear="clearFilters" />
 
-            <DataTable title="Tasks" :pagination="tasks" empty-message="Try adjusting your search or filters"
-                empty-icon="lucide:clipboard-list" :sort-options="sortOptions" :current-sort="filters.sort"
-                :sort-direction="filters.direction as 'asc' | 'desc'" @pagination="handlePagination" @sort="handleSort">
-                <template #default>
-                    <div class="space-y-4">
-                        <DataTableRow v-for="task in tasks.data" :key="task.id" :item="task" :actions="taskActions"
-                            :show-action-icons="true" :show-badges="false" base-path="/tasks" @action="(action, task) => {
-                                if (action.label === 'Edit' || action.label === 'Edit Task') openModal('edit', task);
-                                else if (action.label === 'View' || action.label === 'View Task') openModal('view', task);
-                                else if (action.label === 'Delete' || action.label === 'Delete Task') handleDelete(task);
-                            }">
-                            <template #avatar>
-                                <div class="flex-shrink-0">
-                                    <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <Icon :name="getStatusIcon(task.status)" class="h-5 w-5 text-primary" />
+            <div class="overflow-x-auto">
+                <DataTable title="Tasks" :pagination="tasks" empty-message="Try adjusting your search or filters"
+                    empty-icon="lucide:clipboard-list" :sort-options="sortOptions" :current-sort="filters.sort"
+                    :sort-direction="filters.direction as 'asc' | 'desc'" @pagination="handlePagination"
+                    @sort="handleSort">
+                    <template #default>
+                        <div class="space-y-3">
+                            <DataTableRow v-for="task in tasks.data" :key="task.id" :item="task" :actions="taskActions"
+                                :show-action-icons="true" :show-badges="false" base-path="/tasks" @action="(action, task) => {
+                                    if (action.label === 'Edit' || action.label === 'Edit Task') openModal('edit', task);
+                                    else if (action.label === 'View' || action.label === 'View Task') openModal('view', task);
+                                    else if (action.label === 'Delete' || action.label === 'Delete Task') handleDelete(task);
+                                }">
+                                <template #avatar>
+                                    <div class="flex-shrink-0">
+                                        <div
+                                            class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <Icon :name="getStatusIcon(task.status)"
+                                                class="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                                        </div>
                                     </div>
-                                </div>
-                            </template>
+                                </template>
 
-                            <template #content>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <h4 class="font-medium text-sm truncate">{{ task.title }}</h4>
-                                    <Badge :class="getPriorityColor(task.priority)" class="text-xs">
-                                        <Icon :name="getPriorityIcon(task.priority)" class="h-3 w-3 mr-1" />
-                                        {{ task.priority }}
-                                    </Badge>
-                                    <Badge :class="getStatusColor(task.status)" class="text-xs">
-                                        {{ formatStatus(task.status) }}
-                                    </Badge>
-                                    <Badge v-if="task.is_overdue" variant="destructive" class="text-xs">
-                                        Overdue
-                                    </Badge>
-                                </div>
-                                <p v-if="task.description" class="text-sm text-muted-foreground truncate mb-2">
-                                    {{ task.description }}
-                                </p>
-                                <div class="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <span v-if="task.project?.name">
-                                        Project: {{ task.project.name }}
-                                    </span>
-                                    <span v-if="task.assigned_to && task.assigned_to.name">
-                                        Assigned to {{ task.assigned_to.name }}
-                                    </span>
-                                    <span v-else>
-                                        Unassigned
-                                    </span>
-                                    <span
-                                        v-if="task.created_by && typeof task.created_by === 'object' && task.created_by.name">
-                                        Created by {{ task.created_by.name }}
-                                    </span>
-                                    <span v-if="task.due_date">
-                                        Due {{ new Date(task.due_date).toLocaleDateString() }}
-                                    </span>
-                                    <span>Created {{ new Date(task.created_at).toLocaleDateString() }}</span>
-                                </div>
-                            </template>
-                        </DataTableRow>
-                    </div>
-                </template>
-            </DataTable>
+                                <template #content>
+                                    <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                                        <h4 class="font-medium text-sm truncate">{{ task.title }}</h4>
+                                        <div class="flex flex-wrap gap-1">
+                                            <Badge :class="getPriorityColor(task.priority)" class="text-xs py-0.5">
+                                                <Icon :name="getPriorityIcon(task.priority)" class="h-3 w-3 mr-1" />
+                                                <span class="truncate">{{ task.priority }}</span>
+                                            </Badge>
+                                            <Badge :class="getStatusColor(task.status)" class="text-xs py-0.5">
+                                                <span class="truncate">{{ formatStatus(task.status) }}</span>
+                                            </Badge>
+                                            <Badge v-if="task.is_overdue" variant="destructive" class="text-xs py-0.5">
+                                                Overdue
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                    <p v-if="task.description"
+                                        class="text-sm text-muted-foreground truncate mb-2 hidden sm:block">
+                                        {{ task.description }}
+                                    </p>
+                                    <div
+                                        class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs text-muted-foreground">
+                                        <span v-if="task.project?.id" class="truncate hidden sm:inline">
+                                            Project: {{ task.project.name }}
+                                        </span>
+                                        <span v-if="task.assigned_to && task.assigned_to.name" class="truncate">
+                                            {{ task.assigned_to.name }}
+                                        </span>
+                                        <span v-if="task.due_date" class="truncate">
+                                            Due {{ new Date(task.due_date).toLocaleDateString() }}
+                                        </span>
+                                    </div>
+                                </template>
+                            </DataTableRow>
+                        </div>
+                    </template>
+                </DataTable>
+            </div>
         </div>
     </AppLayout>
 
     <Modal :show="showModal" @close="closeModal">
         <template v-if="modalType === 'create'">
-            <TaskForm :users="users" :projects="projects" :statuses="props.statuses"
-                :priorities="props.priorities" @submitted="closeModal" />
+            <TaskForm :users="users" :projects="projects" :statuses="props.statuses" :priorities="props.priorities"
+                @submitted="closeModal" />
         </template>
         <template v-else-if="modalType === 'edit' && modalTask">
             <TaskForm :task="modalTask" :users="users" :projects="projects" :statuses="props.statuses"
                 :priorities="props.priorities" @submitted="closeModal" />
         </template>
         <template v-else-if="modalType === 'view' && modalTask">
-            <TaskDetails :task="modalTask" />
+            <TaskDetails :task="modalTask" :projects="projects" />
         </template>
     </Modal>
 </template>

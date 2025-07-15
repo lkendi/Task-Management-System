@@ -12,7 +12,8 @@ const props = defineProps<{
     project?: {
       id: number;
       name: string;
-    };
+    } | null;
+    project_id?: number;
     assigned_to?: {
       id: number;
       name: string;
@@ -22,7 +23,9 @@ const props = defineProps<{
       name: string;
     } | null;
     created_at: string;
-  } 
+    is_overdue?: boolean;
+  },
+  projects?: Array<{ id: number, name: string }>
 }>();
 
 const getStatusColor = (status: string) => {
@@ -50,6 +53,15 @@ const formatDate = (dateString: string) => {
     day: 'numeric'
   });
 };
+
+const getProjectName = () => {
+  if (props.task.project?.name) return props.task.project.name;
+  if (props.projects && props.task.project_id) {
+    const found = props.projects.find(p => p.id === props.task.project_id);
+    if (found) return found.name;
+  }
+  return 'No project';
+};
 </script>
 
 <template>
@@ -68,9 +80,7 @@ const formatDate = (dateString: string) => {
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-1">
           <p class="text-xs text-muted-foreground">Project</p>
-          <p class="text-sm text-foreground">
-            {{ task.project?.name || 'No project' }}
-          </p>
+          <p class="text-sm text-foreground">{{ getProjectName() }}</p>
         </div>
         
         <div class="space-y-1">

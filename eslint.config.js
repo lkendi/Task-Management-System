@@ -15,5 +15,14 @@ export default defineConfigWithVueTs(
             '@typescript-eslint/no-explicit-any': 'off',
         },
     },
+    {
+        files: [
+            'resources/js/pages/admin/Tasks.vue',
+            'resources/js/pages/admin/Users.vue',
+        ],
+        rules: {
+            'vue/no-deprecated-filter': 'off',
+        },
+    },
     prettier,
 );

@@ -73,9 +73,9 @@ function submit() {
         <div class="space-y-3">
             <div>
                 <label class="block text-sm font-medium text-foreground mb-1.5">Name</label>
-                <input
+                <input 
                     v-model="form.name"
-                    placeholder="Project name"
+                    placeholder="Project name" 
                     required
                     class="w-full px-3.5 py-2.5 text-sm rounded-md border border-[#e3e3e0] bg-[#FDFDFC] dark:bg-[#161615] dark:border-[#3E3E3A] focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]"
                     :class="{ 'border-red-500': errors.name }"
@@ -85,9 +85,9 @@ function submit() {
             
             <div>
                 <label class="block text-sm font-medium text-foreground mb-1.5">Description</label>
-                <textarea
+                <textarea 
                     v-model="form.description"
-                    placeholder="Project description"
+                    placeholder="Project description" 
                     rows="3"
                     class="w-full px-3.5 py-2.5 text-sm rounded-md border border-[#e3e3e0] bg-[#FDFDFC] dark:bg-[#161615] dark:border-[#3E3E3A] focus:outline-none focus:ring-2 focus:ring-[#1b1b18] dark:focus:ring-[#EDEDEC]"
                 />
@@ -134,4 +134,4 @@ function submit() {
             </button>
         </div>
     </form>
-</template>
+</template> 

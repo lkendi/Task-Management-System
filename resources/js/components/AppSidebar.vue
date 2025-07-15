@@ -2,7 +2,6 @@
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
 import { LayoutGrid, Users, CheckSquare, BriefcaseBusiness } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
@@ -22,9 +21,8 @@ const mainNavItems = computed(() => {
         ];
     } else {
         return [
-            { title: 'Dashboard', href: '/user-dashboard', icon: LayoutGrid },
-            { title: 'My Tasks', href: '/my-tasks', icon: CheckSquare },
-        ];
+            { title: 'My Tasks', href: '/user-dashboard', icon: CheckSquare  },
+];
     }
 });
 

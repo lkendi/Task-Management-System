@@ -1,5 +1,7 @@
 # Task Management System
 
+Hosted Website: 
+
 A modern task and project management system built with **Laravel 12**, **Vue 3**, and **Inertia.js**.
 
 ## Features
@@ -8,7 +10,7 @@ A modern task and project management system built with **Laravel 12**, **Vue 3**
 - User management (admin only)
 - Email notifications for task assignments
 - Modern UI with Tailwind CSS
-- Backend feature tests
+- Backend feature unit tests (using PHPUnit)
 
 ## Getting Started
 
@@ -33,6 +35,11 @@ A modern task and project management system built with **Laravel 12**, **Vue 3**
    php artisan migrate
    php artisan db:seed
    ```
+
+   . **Run tests**
+   ```bash
+   php artisan test
+   ```
 5. **Start development servers**
    ```bash
    npm run dev
@@ -44,4 +51,11 @@ A modern task and project management system built with **Laravel 12**, **Vue 3**
    email: admin@example.com
    password: password
 
-   Feel free to create a regular user
+   Feel free to create a regular user or use the following credentials:
+   email: user@example.com
+   password: password
+
+
+## User Interface Images
+
+Please find them under `docs/screenshots/` folder

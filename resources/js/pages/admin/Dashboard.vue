@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Badge from '@/components/ui/badge/Badge.vue';
 import Button from '@/components/ui/button/Button.vue';
 import Icon from '@/components/Icon.vue';
-import TextLink from '@/components/TextLink.vue';
 import { ref, computed } from 'vue';
 import TaskDetails from '@/components/ui/tasks/TaskDetails.vue';
 import Modal from '@/components/ui/modal/Modal.vue';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 interface User {
     id: number;
@@ -55,6 +55,7 @@ interface Stats {
 interface Props {
     stats: Stats;
     recentTasks: Task[];
+    users: User[];
 }
 
 const props = defineProps<Props>();
@@ -124,7 +125,11 @@ const getPriorityIcon = (priority: string) => {
 };
 
 const showModal = ref(false);
+const showAssignModal = ref(false);
 const modalTask = ref<Task | null>(null);
+const selectedUser = ref<string>('');
+const taskToAssign = ref<Task | null>(null);
+const showDropdown = ref(false);
 
 function openModal(task: Task) {
     modalTask.value = {
@@ -147,9 +152,47 @@ function openModal(task: Task) {
     showModal.value = true;
 }
 
+function openAssignModal(task: Task) {
+    taskToAssign.value = task;
+    selectedUser.value = task.assigned_to?.id?.toString() || '';
+    showAssignModal.value = true;
+}
+
 function closeModal() {
     showModal.value = false;
     modalTask.value = null;
+}
+
+function closeAssignModal() {
+    showAssignModal.value = false;
+    taskToAssign.value = null;
+    selectedUser.value = '';
+}
+
+function assignTask() {
+    if (!taskToAssign.value) return;
+    
+    router.patch(`/tasks/${taskToAssign.value.id}`, {
+        assigned_to: selectedUser.value || null
+    }, {
+        onSuccess: () => {
+            if (taskToAssign.value) {
+                const assignedUser = props.users.find(u => u.id.toString() === selectedUser.value);
+                taskToAssign.value.assigned_to = assignedUser || null;
+                
+                const taskIndex = props.recentTasks.findIndex(t => t.id === taskToAssign.value?.id);
+                if (taskIndex !== -1) {
+                    props.recentTasks[taskIndex].assigned_to = assignedUser || null;
+                }
+            }
+            closeAssignModal();
+        },
+        onError: (errors) => {
+            console.error('Assignment failed:', errors);
+            closeAssignModal();
+        },
+        preserveScroll: true,
+    });
 }
 
 const computedModalTask = computed(() => {
@@ -164,7 +207,6 @@ const computedModalTask = computed(() => {
 <template>
 
     <Head title="Dashboard" />
-
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 p-6">
             <div class="flex items-center justify-between">
@@ -225,9 +267,9 @@ const computedModalTask = computed(() => {
                         <Icon name="lucide:users" class="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div class="text-2xl font-bold">{{ stats.users.active }}</div>
+                        <div class="text-2xl font-bold">{{ stats.users?.active || 0 }}</div>
                         <p class="text-xs text-muted-foreground mt-1">
-                            of {{ stats.users.total }} total users
+                            of {{ stats.users?.total || 0 }} total users
                         </p>
                     </CardContent>
                 </Card>
@@ -277,9 +319,14 @@ const computedModalTask = computed(() => {
                                         </span>
                                     </div>
                                 </div>
-                                <Button variant="outline" size="sm" @click="openModal(task)">
-                                    View
-                                </Button>
+                                <div class="flex gap-2">
+                                    <Button variant="outline" size="sm" @click="openModal(task)">
+                                        View
+                                    </Button>
+                                    <Button variant="outline" size="sm" @click="openAssignModal(task)">
+                                        Assign
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </CardContent>
@@ -321,14 +368,38 @@ const computedModalTask = computed(() => {
 
     <Modal :show="showModal" @close="closeModal">
         <template #title>Task Details</template>
-
-        <TaskDetails
-            v-if="computedModalTask"
-            :task="computedModalTask"
-        />
-
+        <TaskDetails v-if="computedModalTask" :task="computedModalTask" />
         <template #footer>
             <Button variant="outline" @click="closeModal">Close</Button>
+        </template>
+    </Modal>
+
+    <Modal :show="showAssignModal" @close="closeAssignModal">
+        <template #title>Assign Task</template>
+        <div class="space-y-4">
+            <div>
+                <p class="text-sm text-muted-foreground mb-1">Task</p>
+                <p class="font-medium">{{ taskToAssign?.title }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground mb-1">Assign to</p>
+                <Select v-model="selectedUser">
+                    <SelectTrigger class="w-full">
+                        <SelectValue placeholder="Select a user">
+                            {{props.users.find(u => u.id.toString() === selectedUser)?.name || 'Select a user'}}
+                        </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem v-for="user in props.users" :key="user.id" :value="user.id.toString()">
+                            {{ user.name }}
+                        </SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+        <template #footer>
+            <Button variant="outline" @click="closeAssignModal">Cancel</Button>
+            <Button @click="assignTask" class="ml-2">Assign</Button>
         </template>
     </Modal>
 </template>
