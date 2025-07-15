@@ -259,7 +259,7 @@ function updateStatus(task: Task) {
                             <Button variant="outline" size="sm" @click="openModal(task)">View</Button>
                             <select
                                 v-model="statusUpdate[task.id]"
-                                class="border rounded px-2 py-1 mr-2 bg-white dark:bg-gray-800 text-black dark:text-white"
+                                class="border border-border rounded px-2 py-1 mr-2 bg-background dark:bg-gray-800 text-foreground dark:text-white focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
                                 style="min-width: 120px;"
                             >
                                 <option value="pending">Pending</option>
