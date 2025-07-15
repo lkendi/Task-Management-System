@@ -128,17 +128,8 @@ class TaskController extends Controller
             'due_date' => 'nullable|date',
             'assigned_to' => 'nullable|exists:users,id',
             'created_by' => 'nullable|exists:users,id',
-            'project_id' => 'nullable|exists:projects,id',
+            'project_id' => 'required|exists:projects,id',
         ]);
-
-        if (empty($data['project_id'])) {
-            $firstProject = \App\Models\Project::first();
-            if ($firstProject) {
-                $data['project_id'] = $firstProject->id;
-            } else {
-                abort(400, 'No project available to assign to the task.');
-            }
-        }
 
         $task = Task::create($data);
 
@@ -151,10 +142,7 @@ class TaskController extends Controller
     public function show(string $id)
     {
         $task = Task::with(['assignedTo', 'createdBy', 'project'])->findOrFail($id);
-        
-        return Inertia::render('admin/Tasks/Show', [
-            'task' => $task,
-        ]);
+        return response()->json($task);
     }
 
     /**

@@ -41,7 +41,7 @@ class TasksTest extends TestCase
             'created_by' => $admin->id,
             'project_id' => $project->id,
             'assigned_to' => $assignee->id,
-        ]);
+        ], ['Accept' => 'application/json']);
         $response->assertRedirect();
         $this->assertDatabaseHas('tasks', ['title' => 'Test Task']);
     }
