@@ -3,7 +3,7 @@ import { Head, Link } from '@inertiajs/vue3';
 </script>
 
 <template>
-    <Head title="Welcome to Task Management System">
+    <Head title="Welcome to Task Manager">
         <link rel="preconnect" href="https://rsms.me/" />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
     </Head>
@@ -12,7 +12,7 @@ import { Head, Link } from '@inertiajs/vue3';
             <nav class="flex items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     <img src="/logo.png" alt="App Logo" class="h-8 w-8" />
-                    <span class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Task Management</span>
+                    <span class="text-lg font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Task Manager</span>
                 </div>
                 <div class="flex items-center gap-4">
                     <Link

@@ -31,6 +31,10 @@ const submit = () => {
     <AuthBase title="Log in to your account" description="Enter your email and password below to log in">
         <Head title="Log in" />
 
+        <div v-if="form.hasErrors" class="mb-4 text-center text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded p-2">
+            <span v-for="(error, key) in form.errors" :key="key">{{ error }}</span>
+        </div>
+
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
             {{ status }}
         </div>

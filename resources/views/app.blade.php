@@ -30,7 +30,7 @@
             }
         </style>
 
-        <title inertia>{{ config('app.name', 'Task Management System') }}</title>
+        <title inertia>{{ config('app.name', 'Task Manager') }}</title>
 
         <link rel="icon" href="/logo.png" sizes="any">
         <link rel="icon" href="/logo.png" type="image/png">

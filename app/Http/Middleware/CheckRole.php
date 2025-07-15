@@ -23,7 +23,7 @@ class CheckRole
         $user = Auth::user();
         $allRoles = array_merge([$role], $roles);
 
-        if (!$user->hasAnyRole($allRoles)) {
+        if (!in_array($user->role, $allRoles)) {
             abort(403, 'Unauthorized action.');
         }
 

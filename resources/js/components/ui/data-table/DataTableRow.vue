@@ -96,26 +96,6 @@ const getDefaultActions = () => {
                     </Tooltip>
                 </TooltipProvider>
             </div>
-            
-            <DropdownMenu v-if="actions.length > 0">
-                <DropdownMenuTrigger as-child>
-                    <Button variant="outline" size="sm" class="h-8 w-8 p-0 flex items-center justify-center">
-                        <Icon name="more-horizontal" class="h-4 w-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem 
-                        v-for="action in actions" 
-                        :key="action.label"
-                        :class="{ 'text-red-600': action.variant === 'destructive' }"
-                        @click="handleAction(action)"
-                    >
-                        <Icon v-if="action.icon" :name="action.icon.replace('lucide:', '')" class="h-4 w-4 mr-2" />
-                        {{ action.label }}
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
         </div>
     </div>
 </template> 

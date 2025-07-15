@@ -67,10 +67,10 @@ const getSortIcon = (sortKey: string) => {
         <CardHeader>
             <div class="flex items-center justify-between">
                 <div>
-                    <CardTitle>{{ title }} ({{ pagination.total }})</CardTitle>
-                    <CardDescription v-if="description">
-                        {{ description }}
-                    </CardDescription>
+            <CardTitle>{{ title }} ({{ pagination.total }})</CardTitle>
+            <CardDescription v-if="description">
+                {{ description }}
+            </CardDescription>
                 </div>
                 
                 <DropdownMenu v-if="sortOptions.length > 0">

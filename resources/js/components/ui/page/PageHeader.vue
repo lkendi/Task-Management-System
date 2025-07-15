@@ -30,11 +30,11 @@ const handleAction = () => {
             <p v-if="description" class="text-muted-foreground">{{ description }}</p>
         </div>
         
-        <Button v-if="actionLabel" @click="handleAction" as-child>
+        <Button v-if="actionLabel" as-child>
             <a v-if="actionHref" :href="actionHref">
                 {{ actionLabel }}
             </a>
-            <button v-else>
+            <button v-else @click="handleAction">
                 {{ actionLabel }}
             </button>
         </Button>

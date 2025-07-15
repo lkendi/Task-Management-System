@@ -26,6 +26,10 @@ const submit = () => {
     <AuthBase title="Create an account" description="Enter your details below to create your account">
         <Head title="Register" />
 
+        <div v-if="form.hasErrors" class="mb-4 text-center text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded p-2">
+            <span v-for="(error, key) in form.errors" :key="key">{{ error }}</span>
+        </div>
+
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
                 <div class="grid gap-2">

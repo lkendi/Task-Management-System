@@ -6,7 +6,12 @@ import { PageHeader } from '@/components/ui/page';
 import { FilterBar } from '@/components/ui/filters';
 import { DataTable, DataTableRow } from '@/components/ui/data-table';
 import Badge from '@/components/ui/badge/Badge.vue';
+import Icon from '@/components/Icon.vue';
 import { useFilters } from '@/composables/useFilters';
+import Modal from '@/components/ui/modal/Modal.vue';
+import UserForm from '@/components/ui/users/UserForm.vue';
+import UserDetails from '@/components/ui/users/UserDetails.vue';
+import { ref } from 'vue';
 
 interface User {
     id: number;
@@ -33,8 +38,8 @@ interface Props {
         search: string;
         role: string;
         verified: string;
-        sort?: string;
-        direction?: 'asc' | 'desc';
+        sort: string;
+        direction: 'asc' | 'desc';
     };
     roles: string[];
 }
@@ -54,7 +59,9 @@ const filterConfigs = [
     {
         key: 'role',
         label: 'Role',
-        options: props.roles.map(role => ({ value: role, label: role })),
+        options: [
+            ...props.roles.map(role => ({ value: role, label: role.charAt(0).toUpperCase() + role.slice(1) })),
+        ],
     },
     {
         key: 'verified',
@@ -75,14 +82,10 @@ const sortOptions = [
 ];
 
 const userActions = [
-    { label: 'View Profile', href: (user: User) => `/users/${user.id}`, icon: 'eye' },
+    { label: 'View User', href: (user: User) => `/users/${user.id}`, icon: 'eye' },
     { label: 'Edit User', href: (user: User) => `/users/${user.id}/edit`, icon: 'edit' },
     { label: 'Delete User', variant: 'destructive' as const, icon: 'trash' },
 ];
-
-const getVerificationStatus = (verifiedAt: string | null) => {
-    return verifiedAt ? 'Verified' : 'Unverified';
-};
 
 const getVerificationColor = (verifiedAt: string | null) => {
     return verifiedAt 
@@ -94,45 +97,52 @@ const handlePagination = (url: string) => {
     router.get(url);
 };
 
-const handleSort = (sort: string, direction: 'asc' | 'desc') => {
-    const params = {
-        ...filters,
-        sort,
-        direction,
-    };
-    router.get('/users', params, {
+const handleSort = (sort: string) => {
+    const direction = filters.value.sort === sort && filters.value.direction === 'asc' ? 'desc' : 'asc';
+    filters.value.sort = sort;
+    filters.value.direction = direction;
+    router.get('/users', filters.value, {
         preserveState: true,
         preserveScroll: true,
         replace: true,
     });
 };
 
-const handleUserAction = (action: any, user: User) => {
-    if (action.href) {
-        const href = typeof action.href === 'function' ? action.href(user) : action.href;
-        router.get(href);
-    } else if (action.label === 'Delete' || action.label === 'Delete User') {
-        if (confirm(`Are you sure you want to delete ${user.name}?`)) {
-            router.delete(`/users/${user.id}`);
-        }
-    } else if (action.label === 'View') {
-        router.get(`/users/${user.id}`);
-    } else if (action.label === 'Edit') {
-        router.get(`/users/${user.id}/edit`);
+const showModal = ref(false);
+const modalType = ref('');
+const modalUser = ref(null);
+
+function openModal(type: string, user = null) {
+    modalType.value = type;
+    modalUser.value = user;
+    showModal.value = true;
+}
+
+function closeModal() {
+    showModal.value = false;
+    modalUser.value = null;
+}
+
+function handleDelete(user: User) {
+    if (confirm(`Are you sure you want to delete "${user.name}"?`)) {
+        router.delete(`/users/${user.id}`, {
+            onSuccess: () => closeModal()
+        });
     }
-};
+}
 </script>
 
 <template>
-    <Head title="Users - Task Management System" />
+    <Head title="Users" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 p-6">
             <PageHeader
                 title="Users"
                 description="Manage system users and their permissions"
-                action-label="Add User"
-                action-href="/users/create"
+                action-label="Create User"
+                action-href=""
+                @action="() => openModal('create')"
             />
 
             <FilterBar
@@ -152,8 +162,8 @@ const handleUserAction = (action: any, user: User) => {
                 empty-message="Try adjusting your search or filters"
                 empty-icon="lucide:users"
                 :sort-options="sortOptions"
-                :current-sort="filters.sort || ''"
-                :sort-direction="(filters.direction as 'asc' | 'desc') || 'asc'"
+                :current-sort="filters.sort"
+                :sort-direction="filters.direction as 'asc' | 'desc'"
                 @pagination="handlePagination"
                 @sort="handleSort"
             >
@@ -167,7 +177,11 @@ const handleUserAction = (action: any, user: User) => {
                             :show-action-icons="true"
                             :show-badges="true"
                             base-path="/users"
-                            @action="handleUserAction"
+                            @action="(action, user) => {
+                                if (action.label === 'Edit' || action.label === 'Edit User') openModal('edit', user);
+                                else if (action.label === 'View' || action.label === 'View User') openModal('view', user);
+                                else if (action.label === 'Delete' || action.label === 'Delete User') handleDelete(user);
+                            }"
                         >
                             <template #avatar>
                                 <div class="flex-shrink-0">
@@ -183,27 +197,19 @@ const handleUserAction = (action: any, user: User) => {
                                 <div class="flex items-center gap-2 mb-1">
                                     <h4 class="font-medium text-sm truncate">{{ user.name }}</h4>
                                     <Badge :class="getVerificationColor(user.email_verified_at)" class="text-xs">
-                                        {{ getVerificationStatus(user.email_verified_at) }}
+                                        {{ user.email_verified_at ? 'Verified' : 'Unverified' }}
                                     </Badge>
                                 </div>
                                 <p class="text-sm text-muted-foreground truncate">{{ user.email }}</p>
                                 <div class="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-                                    <span>Joined {{ user.created_at }}</span>
+                                    <span>
+                                        {{ user.roles && user.roles.length > 0
+                                            ? user.roles.map(r => r.charAt(0).toUpperCase() + r.slice(1)).join(', ')
+                                            : 'No roles' }}
+                                    </span>
+                                    <span>Joined {{ new Date(user.created_at).toLocaleDateString() }}</span>
                                     <span>{{ user.assigned_tasks_count }} assigned tasks</span>
                                     <span>{{ user.created_tasks_count }} created tasks</span>
-                                </div>
-                            </template>
-
-                            <template #badges>
-                                <div class="flex gap-1">
-                                    <Badge 
-                                        v-for="role in user.roles" 
-                                        :key="role"
-                                        variant="secondary"
-                                        class="text-xs"
-                                    >
-                                        {{ role }}
-                                    </Badge>
                                 </div>
                             </template>
                         </DataTableRow>
@@ -212,4 +218,23 @@ const handleUserAction = (action: any, user: User) => {
             </DataTable>
         </div>
     </AppLayout>
+
+    <Modal :show="showModal" @close="closeModal">
+        <template v-if="modalType === 'create'">
+            <UserForm
+                :roles="props.roles"
+                @submitted="closeModal"
+            />
+        </template>
+        <template v-else-if="modalType === 'edit' && modalUser">
+            <UserForm
+                :user="modalUser"
+                :roles="props.roles"
+                @submitted="closeModal"
+            />
+        </template>
+        <template v-else-if="modalType === 'view' && modalUser">
+            <UserDetails :user="modalUser" />
+        </template>
+    </Modal>
 </template>

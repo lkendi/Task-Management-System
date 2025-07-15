@@ -4,26 +4,29 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { LayoutGrid, Users, CheckSquare } from 'lucide-vue-next';
+import { LayoutGrid, Users, CheckSquare, BriefcaseBusiness } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import { computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: '/dashboard',
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Users',
-        href: '/users',
-        icon: Users,
-    },
-    {
-        title: 'Tasks',
-        href: '/tasks',
-        icon: CheckSquare,
-    },
-];
+const page = usePage();
+const userRole = computed(() => page.props.auth?.role || 'user');
+
+const mainNavItems = computed(() => {
+    if (userRole.value === 'admin') {
+        return [
+            { title: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+            { title: 'Users', href: '/users', icon: Users },
+            { title: 'Projects', href: '/projects', icon: BriefcaseBusiness },
+            { title: 'Tasks', href: '/tasks', icon: CheckSquare },
+        ];
+    } else {
+        return [
+            { title: 'Dashboard', href: '/user-dashboard', icon: LayoutGrid },
+            { title: 'My Tasks', href: '/my-tasks', icon: CheckSquare },
+        ];
+    }
+});
 
 </script>
 
@@ -33,7 +36,7 @@ const mainNavItems: NavItem[] = [
             <SidebarMenu>
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" as-child>
-                        <Link :href="route('dashboard')">
+                        <Link :href="userRole === 'admin' ? '/dashboard' : '/user-dashboard'">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>

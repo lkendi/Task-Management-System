@@ -42,12 +42,8 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         $authData = [
             'user' => $user,
+            'role' => $user->role
         ];
-
-        if ($user) {
-            $authData['roles'] = $user->roles->pluck('name');
-            $authData['permissions'] = $user->getAllPermissions()->pluck('name');
-        }
 
         return [
             ...parent::share($request),
