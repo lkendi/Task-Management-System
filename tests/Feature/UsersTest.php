@@ -35,6 +35,7 @@ class UsersTest extends TestCase
             'name' => 'Test User',
             'email' => 'testuser@example.com',
             'password' => 'password',
+            'password_confirmation' => 'password',
             'role' => 'user',
         ]);
         $response->assertRedirect();

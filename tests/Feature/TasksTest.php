@@ -32,11 +32,15 @@ class TasksTest extends TestCase
     {
         $admin = User::factory()->create(['role' => 'admin']);
         $this->actingAs($admin);
+        $project = \App\Models\Project::factory()->create();
+        $assignee = User::factory()->create();
         $response = $this->post('/tasks', [
             'title' => 'Test Task',
             'status' => 'pending',
             'priority' => 'medium',
             'created_by' => $admin->id,
+            'project_id' => $project->id,
+            'assigned_to' => $assignee->id,
         ]);
         $response->assertRedirect();
         $this->assertDatabaseHas('tasks', ['title' => 'Test Task']);
