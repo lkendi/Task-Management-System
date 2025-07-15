@@ -147,10 +147,6 @@ const computedModalTask = computed(() => {
     };
 });
 
-function setStatus(task: Task, status: string) {
-    statusUpdate.value[task.id] = status;
-}
-
 function updateStatus(task: Task) {
     const newStatus = statusUpdate.value[task.id] || task.status;
     Inertia.patch(`/tasks/${task.id}`, { status: newStatus });

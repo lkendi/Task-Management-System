@@ -129,7 +129,6 @@ const showAssignModal = ref(false);
 const modalTask = ref<Task | null>(null);
 const selectedUser = ref<string>('');
 const taskToAssign = ref<Task | null>(null);
-const showDropdown = ref(false);
 
 function openModal(task: Task) {
     modalTask.value = {
@@ -182,7 +181,7 @@ function assignTask() {
                 
                 const taskIndex = props.recentTasks.findIndex(t => t.id === taskToAssign.value?.id);
                 if (taskIndex !== -1) {
-                    props.recentTasks[taskIndex].assigned_to = assignedUser || null;
+                    // props.recentTasks[taskIndex].assigned_to = assignedUser || null;
                 }
             }
             closeAssignModal();

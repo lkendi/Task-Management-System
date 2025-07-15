@@ -34,4 +34,5 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 EXPOSE 8080
 
 # Run migrations & start Apache on port 8080
-CMD php artisan migrate --force && apache2-foreground -DFOREGROUND -k start -p 8080
+CMD php artisan migrate --force && apache2-foreground
+
