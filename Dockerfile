@@ -18,18 +18,13 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy only dependency files first for better caching
-COPY composer.json composer.lock package.json vite.config.js ./
-COPY resources/css ./resources/css
-COPY resources/js ./resources/js
-
 # Install PHP dependencies
 RUN composer install --no-dev --no-interaction --optimize-autoloader
 
 # Install Node dependencies and build assets
 RUN npm install && npm run build
 
-# Copy remaining application files
+# Copy application files
 COPY . .
 
 # Set file permissions
