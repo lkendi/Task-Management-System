@@ -2,38 +2,39 @@ FROM php:8.2-apache
 
 WORKDIR /var/www/html
 
-# Install dependencies
+# 1. First copy ONLY the required files for dependency installation
+COPY composer.json composer.lock package.json vite.config.ts ./
+
+# 2. Install system dependencies
 RUN apt-get update && apt-get install -y \
-    libzip-dev zip unzip git curl libonig-dev libpng-dev libxml2-dev nodejs npm \
-    && docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl bcmath gd opcache
+    libzip-dev zip unzip git curl libonig-dev libpng-dev libxml2-dev \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# 3. Install PHP extensions
+RUN docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl bcmath gd opcache
 
-# Configure Apache for Laravel
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf \
-    && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# Install Composer
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-
-# Install PHP dependencies
+# 4. Install Composer dependencies
 RUN composer install --no-dev --no-interaction --optimize-autoloader
 
-# Install Node dependencies and build assets
+# 5. Copy remaining files in separate stages
+COPY resources/css ./resources/css
+COPY resources/js ./resources/js
+
+# 6. Install Node dependencies and build
 RUN npm install && npm run build
 
-# Copy application files
+# 7. Copy all remaining application files
 COPY . .
 
-# Set file permissions
+# 8. Set file permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
-# Configure for Railway
+# 9. Configure for Railway
 RUN sed -i 's/80/8080/g' /etc/apache2/ports.conf /etc/apache2/sites-enabled/*.conf
 EXPOSE 8080
 
-# Optimized startup command
+# 10. Optimized startup command
 CMD ["sh", "-c", "php artisan migrate --force && exec apache2-foreground"]
