@@ -49,5 +49,5 @@ EXPOSE 8080
 
 # 8. Run migrations and start server
 RUN php artisan migrate --force
-RUN php artisan db:seed --force
+# RUN php artisan db:seed --force
 RUN php artisan serve --host=0.0.0.0 --port=8080
