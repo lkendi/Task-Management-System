@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
 
 # 2. Get composer, nodejs and npm
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -&& \ 
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -&& \ 
     apt-get update && apt-get install -y nodejs && \
     npm install -g npm@latest
 
