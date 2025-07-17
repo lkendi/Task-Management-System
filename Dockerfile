@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     default-mysql-client \
     default-libmysqlclient-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-freetype \
-    && docker-php-ext-install pdo_mysql pdo_pgsql mbstring zip exif pcntl bcmath gd zip sodium opache
+    && docker-php-ext-install pdo_mysql pdo_pgsql mbstring zip exif pcntl bcmath gd zip sodium
 
 
 # 2. Get composer, nodejs and npm
